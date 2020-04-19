@@ -3,6 +3,7 @@ package ru.job4j.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.domain.Room;
 import ru.job4j.repository.RoomRepository;
@@ -24,6 +25,7 @@ public class RoomController {
         this.rooms = rooms;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/")
     public ResponseEntity<Room> create(@RequestBody Room room) {
         var result = this.rooms.add(room);
@@ -33,6 +35,7 @@ public class RoomController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
         Room room = new Room(id);
@@ -40,6 +43,7 @@ public class RoomController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/")
     public ResponseEntity<Void> update(@RequestBody Room room) {
         if (this.rooms.update(room)) {
@@ -49,6 +53,7 @@ public class RoomController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/addPerson/{personId}/{roomId}")
     public ResponseEntity<Void> addPerson(@PathVariable int personId, @PathVariable int roomId) {
         if (this.rooms.addPerson(personId, roomId)) {
@@ -58,6 +63,7 @@ public class RoomController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/deletePerson/{personId}/{roomId}")
     public ResponseEntity<Void> deletePerson(@PathVariable int personId, @PathVariable int roomId) {
         if (this.rooms.deletePerson(personId, roomId)) {

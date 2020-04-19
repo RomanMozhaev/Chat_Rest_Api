@@ -3,8 +3,11 @@ package ru.job4j.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.domain.Person;
+import ru.job4j.domain.Role;
 import ru.job4j.repository.PersonRepository;
 import ru.job4j.service.PersonService;
 
@@ -20,10 +23,13 @@ import java.util.stream.StreamSupport;
 public class PersonController {
 
     private final PersonService persons;
+    private final BCryptPasswordEncoder encoder;
 
     @Autowired
-    public PersonController(final PersonService persons) {
+    public PersonController(final PersonService persons,
+                            final BCryptPasswordEncoder encoder) {
         this.persons = persons;
+        this.encoder = encoder;
     }
 
     @GetMapping("/find")
@@ -54,15 +60,32 @@ public class PersonController {
         return this.persons.findPersonsByRoom(id);
     }
 
-    @PostMapping("/")
+    @PostMapping("/sign-up")
     public ResponseEntity<Person> create(@RequestBody Person person) {
-        var result = this.persons.add(person);
+        Person cryptPerson = person;
+        cryptPerson.setRole(new Role("ROLE_USER"));
+        cryptPerson.setPassword(encoder.encode(person.getPassword()));
+        var result = this.persons.add(cryptPerson);
         return new ResponseEntity<>(
                 result.orElse(new Person()),
                 result.isPresent() ? HttpStatus.OK : HttpStatus.BAD_REQUEST
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/adminSign-up")
+    public ResponseEntity<Person> createAdmin(@RequestBody Person person) {
+        Person cryptPerson = person;
+        cryptPerson.setRole(new Role("ROLE_ADMIN"));
+        cryptPerson.setPassword(encoder.encode(person.getPassword()));
+        var result = this.persons.add(cryptPerson);
+        return new ResponseEntity<>(
+                result.orElse(new Person()),
+                result.isPresent() ? HttpStatus.OK : HttpStatus.BAD_REQUEST
+        );
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/")
     public ResponseEntity<Void> update(@RequestBody Person person) {
         if (this.persons.update(person)) {
@@ -72,6 +95,7 @@ public class PersonController {
         }
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable int id) {
         Person person = new Person(id);

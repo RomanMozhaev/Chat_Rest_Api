@@ -3,6 +3,7 @@ package ru.job4j.controller;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import ru.job4j.domain.Role;
 import ru.job4j.service.RoleService;
@@ -25,6 +26,7 @@ public class RoleController {
         this.roles = roles;
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/")
     public ResponseEntity<Role> create(@RequestBody Role role) {
         return new ResponseEntity<>(
@@ -33,6 +35,7 @@ public class RoleController {
         );
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/{name}")
     public ResponseEntity<Void> delete(@PathVariable String name) {
         Role role = new Role(name);
@@ -40,6 +43,7 @@ public class RoleController {
         return ResponseEntity.ok().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     @GetMapping("/")
     public List<Role> findAll() {
         return StreamSupport.stream(
